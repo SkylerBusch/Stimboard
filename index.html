@@ -1,0 +1,441 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Stim</title>
+    <style>
+      @import "https://www.nerdfonts.com/assets/css/webfont.css";
+      :root {
+        --visAuth  : none;
+        --invisAuth: flex;
+      }
+      * {
+        transition: transform .12s ease-in-out,
+                    background .08s ease-in-out;
+      }
+      html,body {
+        font-family: 'Trebuchet MS', sans-serif;
+        align-items: center;
+        justify-content: center;
+        background-color: #000;
+        color: #FFF;
+      }
+      h1 {
+        font-family: 'Impact';
+        -webkit-text-stroke: 1px #111;
+        font-size: 2em;
+        margin: 10px;
+      }
+      h4 {
+        margin-top: 1em;
+        margin-bottom: 1em;
+      }
+      .fr {
+        display: flex;
+        flex-direction: row;
+      }
+      .fc {
+        display: flex;
+        flex-direction: column;
+      }
+      input,button {
+        border: 2px solid #fff;
+        border-radius: 2px;
+      }
+      input {
+        background-color: #000;
+        color: #fff;
+      }
+      button {
+        color: #fff;
+        margin-left: 3px;
+        background-color: #000;
+      }
+      button:hover {
+        cursor: pointer;
+        background-color: #444;
+        transform: scale(1.10);
+      }
+      .soundList {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, 150px);
+        grid-auto-rows: 150px;
+        justify-content: center;
+        gap: 1em;
+        width: 100%;
+      }
+      .entry {
+        align-items: center;
+        transition: transition 0.1s ease-in-out, background-color 0.15s ease-in-out;
+        padding: 5px;
+        border: 2.5px solid #dddddd;
+        border-radius: 10px;
+        background-color: #000;
+      }
+      @property --angle {
+        syntax: '<angle>';
+        initial-value: 0deg;
+        inherits: false;
+      }
+      @keyframes bgRot { to { --angle: 360deg; } }
+      .entry > :first-child {
+        height: 100%;
+        overflow: hidden;
+      }
+      .entry:hover {
+        cursor: pointer;
+        transform: scale(1.04) translateY(-4px);
+        background-color: #111;
+      }
+      .entry:active { background-color: #222; }
+      .entry[playing] {
+        border: solid 2.5px #0000;
+        background: radial-gradient(#151515ff,#0000 75%) padding-box,
+                    conic-gradient(from var(--angle) in hsl longer hue, hsl(0,100%,03%), hsl(360,100%,03%)) padding-box,
+                    conic-gradient(from var(--angle) in hsl longer hue, hsl(0,100%,50%), hsl(360,100%,50%)) border-box;
+        animation: bgRot 1s linear infinite;
+      }
+      .entry button {
+        margin-left: 0px;
+        height: 2em;
+        align-items: center;
+        transform: translate(70px, 17px);
+        border-radius: 100px;
+      }
+      .shoveRight {
+        position: absolute;
+        right: 10px;
+        top: 10px;
+        height: 1.4em;
+      }
+      .authVisible {
+        display: var(--visAuth);
+      }
+      .authInvisible {
+        display: var(--invisAuth);
+        
+      }
+      #outerPopup {
+        visibility: hidden;
+        position:fixed;
+        background-color:#0000;
+        left:0px;
+        right:0px;
+        top:0px;
+        bottom:0px;
+        margin:0px;
+        padding:0px;
+        overflow:hidden;
+        backdrop-filter: blur(3px);
+      }
+      #innerPopup {
+        position: absolute;
+        left  : 30%;
+        right : 30%;
+        top   : 30%;
+        bottom: 30%;
+        border: 1.5px solid #fff;
+        border-radius: 100px;
+        background-color: #0009;
+        align-items: center;
+        text-align: center;
+        padding-top: 4%;
+      }
+      #innerPopup > * {
+        width: 75%;
+        margin: 20px;
+        font-size: 36px;
+        max-width: unset;
+      }
+      @keyframes spin{
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .loader {
+        position: relative;
+        right: 10px;
+        visibility: hidden;
+        animation: 1s infinite spin;
+        width: 0px;
+        display: flex;
+        justify-content: center;
+      }
+      .nf-md-dots_circle:before {
+        display: flex;
+        justify-content: center;
+        transform: translate(0px, 15%);
+      }
+      #overlapCheck {
+        visibility: hidden;
+      }
+      #overlapCheck:before {
+        visibility: visible;
+        position: absolute;
+        content: '';
+        width: 10px;
+        height: 10px;
+        background-color: #000;
+        border: 2px solid #fff;
+      }
+      #overlapCheck:before {
+        transition: all 0.1s ease-in-out;
+      }
+      #overlapCheck:hover:before {
+        cursor: pointer;
+        background-color: #444;
+        transform: scale(1.1);
+        transform-origin: center;
+      }
+      #overlapCheck:checked:before {
+        background-color: #A00;
+      }
+      #volSlider {
+        appearance: none;
+        width: 192px;
+        height: 15px;
+        border-radius: 100px;
+        margin-top: 1em;
+      }
+      #volSlider::-webkit-slider-thumb {
+        appearance: none;
+        background: var(--thumb-clr);
+        border: none;
+        outline: 3px solid #fff;
+        width : 1em;
+        height: 1em;
+        border-radius: 100%;
+      }
+      .topMargin {
+        margin-top: 5px;
+      }
+    </style>
+  </head>
+  <body class="fc">
+    <div class="shoveRight fr">
+      <button class="authInvisible nf nf-oct-lock" id="overlayButton"></button>
+    </div>
+    <h1>STIMBOARD HD</h1>
+    <div class="fr">
+      <input placeholder="Search" id="searchInput">
+      <button id="submitButton" class="nf nf-fa-magnifying_glass"></button>
+    </div>
+    <div class="authVisible fr topMargin">
+      <div class="loader nf nf-md-dots_circle"></div>
+      <input placeholder="URL" id="urlInput">
+      <button id="uploadButton" class="nf nf-oct-upload"></button>
+    </div>
+    <div class="fr">
+      <input type="range" min="0" max="100" value="50" id="volSlider">
+    </div>
+    <div class="fr" style="margin-bottom: 10px; margin-top: 5px">
+      <label style="display: flex">
+        Overlapping Sounds
+        <input type="checkbox" id="overlapCheck">
+      </label>
+    </div>
+    <div id="soundList" class="soundList"></div>
+    <div id="outerPopup">
+      <div class="fc" id="innerPopup">
+        <input placeholder="Password" id="passwordInput">
+        <button id="passButton">Submit</button>
+      </div>
+    </div>
+    <script>
+      let E = x => document.getElementById(x);
+      const setVol = (e,v)=>{
+        e.volume = (v/100)**2;
+      }
+      const setVar = (k,v)=>document.documentElement.style.setProperty('--'+k, v);
+      
+      const overlapCheck  = E("overlapCheck" );
+      const searchInput   = E("searchInput"  );
+      const submitButton  = E("submitButton" );
+      const passButton    = E("passButton"   );
+      const soundListElm  = E("soundList"    );
+      const overlayButton = E("overlayButton");
+      const volSlider     = E("volSlider"    );
+      
+      isMobileDevice = () => {
+          /* Check User-Agent */
+          let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+          /* Fallback: Check touch capability + screen width */
+          if (!isMobile) {
+              isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+          }
+          return isMobile;
+      }
+      if (isMobileDevice()) {
+          console.log("Mobile device detected");
+          volSlider.style.display = "none";
+      } else console.log("Desktop device detected");
+      
+      localAuth = (p, cb) => {
+        if(p == undefined)
+          p = localStorage.getItem("password");
+        if(p == undefined)
+          return cb(false);
+        fetch("unlock/", { method: "POST",
+                           body: JSON.stringify({password: p}) }) 
+          .then(x => {
+            if(x.status != 200)
+              return cb(false);
+            localStorage.setItem("password", p);
+            setVar("visAuth"  , "flex");
+            setVar("invisAuth", "none" );
+            E("outerPopup").style.visibility = "hidden";
+            return cb(true);
+          }).catch(()=>0);
+      };
+      
+      localAuth(undefined, ()=>0);
+      
+      playSound = (url,onEnd) => {
+        console.log(url);
+        let e = document.createElement("audio");
+        e.src = url;
+        e.onended = onEnd;
+        document.body.append(e);
+        setVol(e,localStorage.getItem("volume"))
+        e.play();
+        return () => {
+          e.pause();
+          e.currentTime=0;
+        };
+      };
+      
+      stopAllSounds = () => [...document.querySelectorAll(".entry")].map(x => x.stop?.());
+      
+      createSoundEntry = soundboardEntry => {
+        let { name, url } = soundboardEntry;
+        // same as 
+        // let name = soundBoardEntry.name;
+        // let url  = soundBoardEntry.url;
+        
+        let entry = document.createElement("div");
+        entry.className = "entry fc";
+        if(name.length > 67)
+          entry.style["font-size"] = "14px";
+        let nameElm = document.createElement("div");
+        nameElm.innerText = name;
+        
+        let buttonElm = document.createElement("div");
+        buttonElm.className = "fc";
+        
+        let deleteElm = document.createElement("button");
+        deleteElm.className = "authVisible nf nf-oct-trash";
+        deleteElm.onclick = () => {
+          let password = localStorage.getItem("password");
+          fetch("deleteSong/", { method: "POST",
+                                 body: JSON.stringify({name, password}) })
+            .then(() => {
+              stopAllSounds();
+              entry.remove();
+            });
+        };
+        
+        let play = () => {
+          if(!overlapCheck.checked) stopAllSounds();
+          entry.stopSound = playSound(url,stop);
+          // entry.classList.add("playing");
+          entry.setAttribute("playing","1");
+          entry.onclick = stop;
+        };
+        let stop = () => {
+          entry.stopSound?.();
+          // entry.classList.remove("playing");
+          entry.removeAttribute("playing");
+          entry.onclick = play;
+        };
+        entry.stop = stop;
+        stop();
+        
+        entry.appendChild(nameElm);
+        buttonElm.appendChild(deleteElm);
+        entry.appendChild(buttonElm);
+        return entry;
+      };
+      
+      searchSounds = query => {
+        stopAllSounds();
+        fetch(`search/${encodeURI(query)}`)
+          .then(req => req.json())
+          .then(j   => {
+            console.log(j);
+            while(soundListElm.hasChildNodes()) soundListElm.removeChild(soundListElm.firstChild);
+            j.map(n => soundListElm.appendChild(createSoundEntry(n)));
+            return;
+          });
+        console.log(query);
+      };
+      
+      submitButton.onclick = () => {
+        searchSounds(searchInput.value);
+      };
+      
+      passButton.onclick = () => {
+        let password = E("passwordInput").value;
+        localAuth(password, x => x || (E("messageBox").innerText = "Wrong Password"))
+      };
+      
+      uploadButton.onclick = () => {
+        stopAllSounds();
+        let url = E("urlInput").value;
+        
+        let elm = document.querySelector(".loader");
+        elm.style.visibility = "visible";
+        fetch("upload/", { method: "POST",
+                           body: JSON.stringify({url, password:localStorage.getItem("password")}) })
+          .then(x => x.text())
+          .then(msg => {
+            console.log("msg:",msg);
+            elm.style.visibility = "hidden";
+            stopAllSounds();
+            let name = JSON.parse(msg).name;
+            searchInput.value = name;
+            searchSounds(name);
+          })
+          .catch(err => {
+            console.log("Err!",err)
+            elm.style.visibility = "hidden";
+          })
+      };
+      
+      overlayButton.onclick = () => {
+        E("outerPopup").style.visibility = "visible";
+        stopAllSounds();
+      }
+      
+      E("outerPopup").onclick = (e) => {
+        if(e.target == E("outerPopup")) {
+          E("outerPopup").style.visibility = "hidden";
+          stopAllSounds();
+        }
+      };
+      
+      searchInput.addEventListener('keydown', event => {
+        if(event.key === 'Enter') {
+          event.preventDefault();
+          searchSounds(searchInput.value);
+        }
+      });
+      
+      let v = localStorage.getItem("volume");
+      if(v !== undefined) volSlider.value = v;
+      
+      volSlider.oninput = () => {
+        let v = volSlider.value;
+        localStorage.setItem("volume", v);
+        setVar("thumb-clr", `rgb(${v/100*255+50},66,66)`);
+        volSlider.style.background = `linear-gradient(to right, #000 0%, rgb(${v/100*255+50},66,66) ${v}%, #000 ${v}%, #000 100%)`;
+        [...document.querySelectorAll("audio")].map(x => setVol(x,v));
+      };
+      volSlider.oninput();
+      
+      searchSounds('');
+    </script>
+  </body>
+</html>

@@ -1,0 +1,44 @@
+To Do:
+
+
+/*
+  // 1st parameter: [request object, response object]
+  // 2nd parameter: endpoint name
+  // 3rd parameter: bool deciding if it requires auth
+  // 4th parameter: function
+                      1st param: decoded part of url past the endpoint/ part (if present, otherwise "")
+                      2nd param: json decoded body, if present, otherwise undefined
+                      3rd param: callback function
+                                   1st param: response code
+                                   2nd param: response content, either a string or an object to be JSON stringified
+  
+  // returns: something truthy if method matched, falsey otherwise;
+  */
+  
+Going over callbacks: Passing around things doers
+
+a = (x,cb) => cb(x+1, (z,cb) => cb(z*3,x => x**2));
+console.log(
+  a(2, (y,cb) => cb(y-4, (t,cb) => cb(t-5)))
+)
+
+a = (x,A) => A(x+1, (z,C) => C(z*3,x => x**2));
+console.log(
+  a(2, (y,B) => B(y-4, (t,D) => D(t-5)))
+)
+
+a(2, (y,cb) => cb(y-4, (t,cb) => cb(t-5)))
+
+((x,cb) => cb(x+1, (z,cb) => cb(z*3,x => x**2)))(2, (y,cb) => cb(y-4, (t,cb) => cb(t-5)))
+
+((y,cb) => cb(y-4, (t,cb) => cb(t-5)))(2+1, (z,cb) => cb(z*3,x => x**2))
+
+((z,cb) => cb(z*3,x => x**2))(2+1-4, (t,cb) => cb(t-5))
+
+((t,cb) => cb(t-5))((2+1-4)*3,x => x**2)
+
+(x => x**2)(((2+1-4)*3)-5)
+
+(((2+1-4)*3)-5)**2
+
+log: 64
